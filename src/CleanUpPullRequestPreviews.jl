@@ -16,6 +16,7 @@ struct Config{A <: GitHub.Authorization}
     git_command::String
     my_regex::Regex
     num_samples::Int
+    push_to_origin::Bool
     repo_main::String
     repo_previews::String
     repo_previews_branch::String
@@ -29,6 +30,7 @@ function Config(;
                 git_command::AbstractString = "git",
                 my_regex::Regex = r"^\.\/previews\/PR(\d*)$",
                 num_samples::Integer = 3,
+                push_to_origin::Bool = true,
                 repo_main::AbstractString,
                 repo_previews::AbstractString,
                 repo_previews_branch::AbstractString,
@@ -41,6 +43,7 @@ function Config(;
         git_command,
         my_regex,
         num_samples,
+        push_to_origin,
         repo_main,
         repo_previews,
         repo_previews_branch,
@@ -148,9 +151,11 @@ function _git_add_commit_push(api::GitHub.GitHubAPI,
                               clone_directory::AbstractString)
     original_directory = pwd()
     cd(clone_directory)
-    run(`git add -A`)
-    run(`git commit -m "Automated commit created by CleanUpPullRequestPreviews.jl"`)
-    # run(`git push origin --all`)
+    run(`$(config.git_command) add -A`)
+    run(`$(config.git_command) commit -m "Automated commit created by CleanUpPullRequestPreviews.jl"`)
+    if config.push_to_origin
+        run(`$(config.git_command) push origin --all`)
+    end
     cd(original_directory)
     return nothing
 end
