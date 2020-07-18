@@ -81,11 +81,14 @@ Remove old pull request previews.
 function remove_old_previews(api::GitHub.GitHubAPI,
                              auth::GitHub.Authorization,
                              config::Config)
+    original_directory::String = pwd()::String
     clone_directory::String = _git_clone(api, auth, config)::String
     prs_and_paths::Vector{PRandPath} = _get_prs_and_paths(api, auth, config, clone_directory)::Vector{PRandPath}
     pr_is_open::Dict{Int, Bool} = _pr_is_open(api, auth, config, prs_and_paths)::Dict{Int, Bool}
     _delete_preview_directories(api, auth, config, clone_directory, prs_and_paths, pr_is_open)::Nothing
     _git_add_commit_push(api, auth, config, clone_directory)::Nothing
+    cd(original_directory)
+    rm(clone_directory; force = true, recursive = true)
     return nothing
 end
 
