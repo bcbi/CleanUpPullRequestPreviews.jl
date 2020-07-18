@@ -10,8 +10,7 @@ struct PRandPath
     path::String
 end
 
-struct Config{A <: GitHub.Authorization}
-    auth::A
+struct Config
     email_address::String
     git_command::String
     my_regex::Regex
@@ -25,10 +24,9 @@ struct Config{A <: GitHub.Authorization}
 end
 
 function Config(;
-                auth::GitHub.Authorization = GitHub.authenticate(ENV["GITHUB_TOKEN"]),
                 email_address::AbstractString = "41898282+github-actions[bot]@users.noreply.github.com",
                 git_command::AbstractString = "git",
-                my_regex::Regex = r"^\.\/previews\/PR(\d*)$",
+                my_regex::Regex,
                 num_samples::Integer = 3,
                 push_to_origin::Bool = true,
                 repo_main::AbstractString,
@@ -38,7 +36,6 @@ function Config(;
                 username::AbstractString = "github-actions[bot]",
                 )
     result = Config(
-        auth,
         email_address,
         git_command,
         my_regex,
@@ -60,26 +57,38 @@ Remove old pull request previews.
 """
 function remove_old_previews(;
                              api::GitHub.GitHubAPI = GitHub.GitHubWebAPI(HTTP.URI("https://api.github.com")),
+                             auth::GitHub.Authorization = GitHub.authenticate(ENV["GITHUB_TOKEN"]),
                              kwargs...)
     config = Config(; kwargs...)
-
-    clone_directory = _git_clone(api, config)::String
-    prs_and_paths = _get_prs_and_paths(api, config, clone_directory)::Vector{PRandPath}
-    pr_is_open = _pr_is_open(api, config, prs_and_paths)::Dict{Int, Bool}
-    _delete_preview_directories(api, config, clone_directory, prs_and_paths, pr_is_open)::Nothing
-    _git_add_commit_push(api, config, clone_directory)::Nothing
+    remove_old_previews(api, auth, config)::Nothing
     return nothing
 end
 
+"""
+    remove_old_previews
+
+Remove old pull request previews.
+"""
+function remove_old_previews(api::GitHub.GitHubAPI,
+                             auth::GitHub.Authorization,
+                             config::Config)
+    clone_directory::String = _git_clone(api, auth, config)::String
+    prs_and_paths::Vector{PRandPath} = _get_prs_and_paths(api, auth, config, clone_directory)::Vector{PRandPath}
+    pr_is_open::Dict{Int, Bool} = _pr_is_open(api, auth, config, prs_and_paths)::Dict{Int, Bool}
+    _delete_preview_directories(api, auth, config, clone_directory, prs_and_paths, pr_is_open)::Nothing
+    _git_add_commit_push(api, auth, config, clone_directory)::Nothing
+    return nothing
+end
 
 function _git_clone(api::GitHub.GitHubAPI,
-                    config::Config)
+                    auth::GitHub.Authorization,
+                    config::Config)::String
     parent_dir = mktempdir()
     atexit(() -> rm(parent_dir; force = true, recursive = true))
     original_directory = pwd()
     cd(parent_dir)
     run(`$(config.git_command) clone $(config.repo_previews) CLONEDIRECTORY`)
-    clone_directory = joinpath(parent_dir, "CLONEDIRECTORY")
+    clone_directory::String = joinpath(parent_dir, "CLONEDIRECTORY")::String
     cd(clone_directory)
     run(Cmd(String[config.git_command, "config", "user.name", strip(config.username)]))
     run(Cmd(String[config.git_command, "config", "user.email", strip(config.email_address)]))
@@ -89,9 +98,10 @@ function _git_clone(api::GitHub.GitHubAPI,
 end
 
 function _get_prs_and_paths(api::GitHub.GitHubAPI,
+                            auth::GitHub.Authorization,
                             config::Config,
-                            root_directory::AbstractString)
-    result = Vector{PRandPath}(undef, 0)
+                            root_directory::AbstractString)::Vector{PRandPath}
+    result::Vector{PRandPath} = Vector{PRandPath}(undef, 0)::Vector{PRandPath}
     original_directory = pwd()
     cd(root_directory)
     for (root, dirs, files) in walkdir(".")
@@ -109,19 +119,16 @@ function _get_prs_and_paths(api::GitHub.GitHubAPI,
 end
 
 function _pr_is_open(api::GitHub.GitHubAPI,
+                     auth::GitHub.Authorization,
                      config::Config,
-                     prs_and_paths)
-    auth = config.auth
-    num_samples = config.num_samples
-    sample_delay_seconds = config.sample_delay_seconds
-
-    intermediate = Vector{Dict{Int, Bool}}(undef, num_samples)
-    for i = 1:num_samples
+                     prs_and_paths)::Dict{Int, Bool}
+    intermediate = Vector{Dict{Int, Bool}}(undef, config.num_samples)
+    for i = 1:config.num_samples
         intermediate[i] = Dict{Int, Bool}()
     end
-    for i = 1:num_samples
-        @info("Waiting for $(sample_delay_seconds) second(s)...")
-        sleep(sample_delay_seconds)
+    for i = 1:config.num_samples
+        @info("Waiting for $(config.sample_delay_seconds) second(s)...")
+        sleep(config.sample_delay_seconds)
         for pr_and_path in prs_and_paths
             pr = pr_and_path.pr 
             @info("Getting state of PR # $(pr)")
@@ -133,11 +140,11 @@ function _pr_is_open(api::GitHub.GitHubAPI,
             intermediate[i][pr] = github_pr_is_open
         end
     end
-    result = Dict{Int, Bool}()
+    result::Dict{Int, Bool} = Dict{Int, Bool}()::Dict{Int, Bool}
     for pr_and_path in prs_and_paths
         pr = pr_and_path.pr 
         pr_intermediates = Vector{Bool}(undef, num_samples)
-        for i = 1:num_samples
+        for i = 1:config.num_samples
             pr_intermediates[i] = intermediate[i][pr]
         end
         result[pr] = any(pr_intermediates)
@@ -147,8 +154,9 @@ function _pr_is_open(api::GitHub.GitHubAPI,
 end
 
 function _git_add_commit_push(api::GitHub.GitHubAPI,
+                              auth::GitHub.Authorization,
                               config::Config,
-                              clone_directory::AbstractString)
+                              clone_directory::AbstractString)::Nothing
     original_directory = pwd()
     cd(clone_directory)
     run(`$(config.git_command) add -A`)
@@ -161,10 +169,11 @@ function _git_add_commit_push(api::GitHub.GitHubAPI,
 end
 
 function _delete_preview_directories(api::GitHub.GitHubAPI,
+                                     auth::GitHub.Authorization,
                                      config::Config,
                                      clone_directory::AbstractString,
                                      prs_and_paths::Vector{PRandPath},
-                                     pr_is_open::Dict{Int, Bool})
+                                     pr_is_open::Dict{Int, Bool})::Nothing
     original_directory = pwd()
     for pr_and_path in prs_and_paths
         pr = pr_and_path.pr 
