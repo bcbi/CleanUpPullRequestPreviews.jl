@@ -15,9 +15,6 @@ Create a file named `.ci/Project.toml` with the following contents:
 ```toml
 [deps]
 CleanUpPullRequestPreviews = "06c59129-2005-40e8-8e6e-18d91e04568a"
-
-[compat]
-CleanUpPullRequestPreviews = ">= 0.1"
 ```
 
 ### Step 2:
