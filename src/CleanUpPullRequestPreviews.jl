@@ -5,6 +5,15 @@ import HTTP
 
 export remove_old_previews
 
+struct AlwaysAssertionError <: Exception
+    msg::String
+end
+
+function always_assert(cond::Bool, message::String)
+    cond || throw(AlwaysAssertionError(message))
+    return nothing
+end
+
 struct PRandPath
     pr::Int 
     path::String
