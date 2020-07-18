@@ -167,7 +167,7 @@ function _pr_is_open(api::GitHub.GitHubAPI,
             pr_intermediates[i] = intermediate[i][pr_number]
         end
         result[pr_number] = any(pr_intermediates)
-        @info("PR # $(pr_number) is open: $(result[pr])")
+        @info("PR # $(pr_number) is open: $(result[pr_number])")
     end
 
     return result
