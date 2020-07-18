@@ -180,10 +180,15 @@ function _git_add_commit_push(api::GitHub.GitHubAPI,
     original_directory = pwd()
     cd(clone_directory)
     run(`$(config.git_command) add -A`)
-    run(`$(config.git_command) commit -m "Automated commit created by CleanUpPullRequestPreviews.jl"`)
+
+    p = run(pipeline(`$(config.git_command) commit -m "Automated commit created by CleanUpPullRequestPreviews.jl"`; stdout=stdout, stderr=stderr); wait = false)
+    wait(p)
+    @info("Commit succeeded = $(success(p))")
+
     if config.push_to_origin
         run(`$(config.git_command) push origin --all`)
     end
+
     cd(original_directory)
     return nothing
 end
