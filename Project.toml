@@ -1,7 +1,7 @@
 name = "CleanUpPullRequestPreviews"
 uuid = "06c59129-2005-40e8-8e6e-18d91e04568a"
 authors = ["Brown Center for Biomedical Informatics"]
-version = "0.1.0-DEV"
+version = "0.1.0"
 
 [deps]
 GitHub = "bc5e4493-9b4d-5f90-b8aa-2b2bcaad7a26"
