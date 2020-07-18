@@ -154,7 +154,7 @@ function _pr_is_open(api::GitHub.GitHubAPI,
     result::Dict{Int, Bool} = Dict{Int, Bool}()::Dict{Int, Bool}
     for pr_and_path in prs_and_paths
         pr = pr_and_path.pr 
-        pr_intermediates = Vector{Bool}(undef, num_samples)
+        pr_intermediates = Vector{Bool}(undef, config.num_samples)
         for i = 1:config.num_samples
             pr_intermediates[i] = intermediate[i][pr]
         end
