@@ -1,7 +1,7 @@
 name = "CleanUpPullRequestPreviews"
 uuid = "06c59129-2005-40e8-8e6e-18d91e04568a"
 authors = ["Brown Center for Biomedical Informatics"]
-version = "0.1.0"
+version = "0.1.0-DEV"
 
 [compat]
 julia = "1.3"
