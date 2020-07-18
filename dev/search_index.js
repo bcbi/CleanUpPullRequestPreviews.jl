@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"","page":"Home","title":"Home","text":"CurrentModule = CleanUpPullRequestPreviews","category":"page"},{"location":"#CleanUpPullRequestPreviews","page":"Home","title":"CleanUpPullRequestPreviews","text":"","category":"section"},{"location":"","page":"Home","title":"Home","text":"","category":"page"},{"location":"","page":"Home","title":"Home","text":"Modules = [CleanUpPullRequestPreviews]","category":"page"},{"location":"#CleanUpPullRequestPreviews.remove_old_previews-Tuple{}","page":"Home","title":"CleanUpPullRequestPreviews.remove_old_previews","text":"remove_old_previews\n\nRemove old pull request previews.\n\n\n\n\n\n","category":"method"}]
+}
