@@ -134,27 +134,33 @@ function _pr_is_open(api::GitHub.GitHubAPI,
                      auth::GitHub.Authorization,
                      config::Config,
                      prs_and_paths)::Dict{Int, Bool}
+    list_of_all_pr_numbers::Vector{Int} = Int[pr_and_path.pr for pr_and_path in prs_and_paths]::Vector{Int}
+    unique!(list_of_all_pr_numbers)
+    sort!(list_of_all_pr_numbers)
+
     intermediate = Vector{Dict{Int, Bool}}(undef, config.num_samples)
     for i = 1:config.num_samples
         intermediate[i] = Dict{Int, Bool}()
     end
+
     for i = 1:config.num_samples
         if i != 1
             @info("Waiting for $(config.sample_delay_seconds) second(s)...")
             sleep(config.sample_delay_seconds)
         end
-        for pr_and_path in prs_and_paths
-            pr = pr_and_path.pr 
-            @info("Getting state of PR # $(pr)")
+        for pr_number in list_of_all_pr_numbers
+            @info("Getting state of PR # $(pr_number)")
             github_pr = GitHub.pull_request(api,
                                             config.repo_main,
-                                            pr;
+                                            pr_number;
                                             auth = auth)
-            github_pr_is_open = github_pr.state == "open"
-            intermediate[i][pr] = github_pr_is_open
+            github_pr_is_open = github_pr.state != "closed"
+            intermediate[i][pr_number] = github_pr_is_open
         end
     end
+
     result::Dict{Int, Bool} = Dict{Int, Bool}()::Dict{Int, Bool}
+
     for pr_and_path in prs_and_paths
         pr = pr_and_path.pr 
         pr_intermediates = Vector{Bool}(undef, config.num_samples)
@@ -164,6 +170,7 @@ function _pr_is_open(api::GitHub.GitHubAPI,
         result[pr] = any(pr_intermediates)
         @info("PR # $(pr) is open: $(result[pr])")
     end 
+
     return result
 end
 
