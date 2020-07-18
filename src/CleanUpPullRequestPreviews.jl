@@ -136,8 +136,10 @@ function _pr_is_open(api::GitHub.GitHubAPI,
         intermediate[i] = Dict{Int, Bool}()
     end
     for i = 1:config.num_samples
-        @info("Waiting for $(config.sample_delay_seconds) second(s)...")
-        sleep(config.sample_delay_seconds)
+        if i != 1
+            @info("Waiting for $(config.sample_delay_seconds) second(s)...")
+            sleep(config.sample_delay_seconds)
+        end
         for pr_and_path in prs_and_paths
             pr = pr_and_path.pr 
             @info("Getting state of PR # $(pr)")
